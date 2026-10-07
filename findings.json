@@ -1,0 +1,155 @@
+{
+  "method": {
+    "name": "Checks that cannot fail",
+    "one_line": "Plant the defect a check claims to catch. If the suite stays green, the check is not a check.",
+    "procedure": [
+      "Get the suite green and record the exact command and pass count.",
+      "Plant ONE single-line semantic change in the source that a correct check must catch.",
+      "Re-run. A survivor is the finding.",
+      "Rule out an equivalent mutant: a change that leaves behaviour identical proves nothing.",
+      "Report with the input, the wrong output, and the command that produces it."
+    ],
+    "why": "A test that accepts both outcomes proves the code RUNS and never that it is CORRECT. Coverage cannot see this: the line executes. Only planting the defect can."
+  },
+  "external": [
+    {
+      "repo": "vals-ai/benchmark-runtime",
+      "pr": 2,
+      "claimed": "a 53-test suite covering the benchmark runtime",
+      "actual": "grading.py, which decides whether a run counts as complete, had NO test file; 7 single-line mutations all passed, including 'report every success as an error'",
+      "proven": "mutation score 0/7 measured; one defect reachable through their own shipped client (HTTP 200 with body null -> status EVALUATED, result None, complete stays True)",
+      "delivered": "17 tests + an 11-line fix; suite 53 -> 70, mutation score 0/7 -> 7/7"
+    },
+    {
+      "repo": "heygen-com/hyperframes",
+      "pr": 5182,
+      "claimed": "11 required status checks on a protected main",
+      "actual": "one of them, 'Studio: edit accuracy gate', had no needs.changes.result guard; a failed changes job leaves its outputs unset, the job skips, and GitHub reports a skipped job as Success",
+      "proven": "read the branch's required set from the public rulesets API and resolved each finding against it; 6 sibling required checks already carry the guard",
+      "delivered": "one line, in their own idiom. 16 other findings deliberately not sent: not required checks, so no merge gate passes through them"
+    },
+    {
+      "repo": "promptfoo/promptfoo",
+      "pr": 11278,
+      "claimed": "a BLEU assertion that scores a translation against references",
+      "actual": "a blank reference scored 9.99e-, not 0",
+      "proven": "reproduced against the shipped assertion",
+      "delivered": "fix + test"
+    },
+    {
+      "repo": "konsoletyper/teavm",
+      "pr": 1213,
+      "claimed": "java.util.Calendar compiled to JavaScript",
+      "actual": "DAY_OF_WEEK computed wrongly when WEEK_OF_MONTH is set (issue #371)",
+      "proven": "differential against the JVM",
+      "delivered": "fix + test"
+    }
+  ],
+  "gitlab": [
+    {
+      "repo": "gitlab-org/cves",
+      "mr": 77,
+      "actual": "CVE-2023-5009, CISA-KEV listed: the CVSS block disagreed with itself. vectorString said AC:H (recomputes 8.2 HIGH) while attackComplexity said LOW and baseScore said 9.6 CRITICAL. The record resolved to a different severity depending on which field a consumer parsed.",
+      "proven": "GitLab's own 16.3.4 release post states 'high severity' and 8.2 in prose; their CI is ajv schema validation, which by construction cannot see cross-field disagreement"
+    },
+    {
+      "repo": "gitlab-org/cves",
+      "mr": 78,
+      "actual": "CVE-2023-3932 stored baseScore 5.3 MEDIUM against a vector and decomposed metrics that both compute to 8.2; CVE-2023-3399 declared scope UNCHANGED against a vectorString saying S:C",
+      "proven": "four independent signals to one on 3932, including GitLab's character-identical published vector. On 3399 baseScore was DELIBERATELY left alone and the MR says why: the release post gives three different severities, so asserting a direction would be a guess dressed as a finding."
+    }
+  ],
+  "own_code": {
+    "note": "Same method, turned inward: plant the defect each check claims to catch and see whether the suite notices. Ten repositories, each audited by execution, equivalent mutants discarded rather than counted. No summed finding total is published here, and that is deliberate. An earlier version reported 146 across 22 repositories, which was the sweep's ESTIMATE and had not been reproduced; measured against it the per-repository numbers moved up to 3x in both directions. The obvious correction was to publish the reproduced total instead, and that has the same flaw one level down: these repositories counted different units, some mutations and some findings, and the two differ (mcp-tools: twelve mutations, eight findings). Summing them would be a third count from an attempt list. So each row below carries its own measured figure with the unit named, and the headline is the one number that is uniformly reproducible from the diffs.",
+    "fixed_today": [
+      {
+        "repo": "deadgate",
+        "n": 13,
+        "what": "its own severity field claimed a judgment that never ran, and a boundary table could be INVERTED row by row. Then pointing it at a well-built repository found four more, three of them in the version already on PyPI: the detectors tested for `needs.*.result` with a pattern that cannot match `*`, so GitHub's documented fan-in idiom was invisible and a correct gate was reported as one that cannot fail. Fixed in 0.1.1.",
+        "unit": "mutations killed, incl. 4 in a published release"
+      },
+      {
+        "repo": "gradecore",
+        "n": 16,
+        "what": "the suite fingerprint's VALUE was never pinned: `assert h == suite_hash(ids)` compares the function with itself, which `return \"aaaaaaaaaaaa\"` satisfies, so sha256 could become md5 with 97 tests green. Two more tests passed for the wrong reason, and 30 of 31 refusal and abstention markers could be corrupted silently.",
+        "unit": "findings, 57 of 58 mutations killed"
+      },
+      {
+        "repo": "agent-certlab",
+        "n": 7,
+        "what": "the regrader compared 1 of 4 fields; 'fix-did-not-pass-suite', the outcome a real failing agent earns, was produced by no test",
+        "unit": "mutations killed"
+      },
+      {
+        "repo": "agent-graph",
+        "what": "`exponent * log10(abs(base)) > 1000` could be reduced to `exponent > 1000` with 42 tests green: the only overflow fixture had a base whose log was already above 1, so the factor never mattered. The CI step also piped through tee under bash -e with no pipefail, so the job reported tee's exit status and a failing suite read as a pass.",
+        "n": 8,
+        "unit": "mutations killed"
+      },
+      {
+        "repo": "mcp-tools",
+        "what": "the whole BM25 saturation term could become 1.0, leaving a bare sum of IDF, because both fixtures ranked the same either way. `scored[:k]` could become `scored[:10]` since every test asked for k=1 against a corpus where one result and ten look alike, and the documented 0.6 coverage threshold could be swept to 1e-9, 0.3 or 0.85.",
+        "n": 12,
+        "unit": "mutations killed, 8 findings"
+      },
+      {
+        "repo": "rag-eval-lab",
+        "what": "the reranker's prior could be deleted and the suite stayed green: the test asserted only the ORDER, and Python's stable sort preserves input order when every score collapses to 0.0, so the assertion passed against the bug. The aggregate mean could also be the literal 1.0.",
+        "n": 10,
+        "unit": "of 11 mutations killed"
+      },
+      {
+        "repo": "reference-fleet",
+        "n": 4,
+        "what": "the seed and member identity were unasserted: every member could break the identical requests, suite green",
+        "unit": "mutations killed"
+      },
+      {
+        "repo": "evalmut",
+        "n": 4,
+        "what": "aggregate(), 'the only sanctioned way to produce a rate', could lose its seal check",
+        "unit": "mutations killed"
+      },
+      {
+        "repo": "pi-eval",
+        "n": 4,
+        "what": "assert code in (0,1) accepted a pass and a failure equally; tol could be read from a dead key, silently re-grading 162 published tasks",
+        "unit": "mutations killed"
+      }
+    ],
+    "headline": 169,
+    "headline_unit": "tests added across 10 repositories"
+  },
+  "corrected": [
+    {
+      "what": "I shipped a linter to PyPI that reported correct CI as broken, and the corpus average hid it.",
+      "where": "deadgate 0.1.0, found by auditing Arize-ai/openinference",
+      "outcome": "Three detectors asked whether a job reads its upstream's result using needs\\.[A-Za-z0-9_-]+\\., which cannot match '*', so the WILDCARD form GitHub documents was the one spelling the tool could not see. The finding's own text read 'never reads needs.*.result' while failing to match that string. On openinference, whose four CI gates each read it twice: 13 HIGH before, 1 after, and the survivor is unrelated. Corpus-wide the fix removes 43 of 430 HIGH, which is 9.1% against 92% on that one repository. The tool was least accurate on the repositories with the most careful CI, so no corpus average would have surfaced it. All 149 tests passed before and after, which is why there are 156 now. A fourth defect: the documented reproduction command for the published numbers raised NameError on three undefined names, so those figures came from a script that was never the one shipped."
+    },
+    {
+      "what": "My own fix was wrong in the other direction, and the mutation sweep is what caught it.",
+      "where": "deadgate, the D4 gate-coverage check",
+      "outcome": "To stop reporting jobs whose failure a fan-in gate already catches, I walked the needs graph transitively. That is unsound: needs.*.result reports only DIRECT needs, and a failed grandparent makes the parent SKIP, which is not a failure, so the gate never sees it. Transitive suppression would have silenced real findings. No test caught it; the mutation that DELETED the walk survived, and a surviving mutation that improves the program is evidence the program was wrong."
+    },
+    {
+      "what": "An automated reviewer found a test that cannot fail inside my PR about tests that cannot fail.",
+      "where": "vals-ai/benchmark-runtime#2, greptile-apps[bot]",
+      "outcome": "Confirmed by planting it: with score_evaluations dropping every nested result, all 70 tests still passed. Fixed in 006570c and replied with the planted-mutation result rather than agreeing."
+    },
+    {
+      "what": "I reported a repository's suite as red when it was my environment that was wrong.",
+      "where": "evalmut",
+      "outcome": "CI pins gradecore==0.10.2 deliberately; my venv had an editable newer checkout. The suite was green all along."
+    },
+    {
+      "what": "I measured mutation kills by failure COUNT against a baseline that was already failing.",
+      "where": "agent-certlab",
+      "outcome": "Three false 'KILLED' readings. Redone by comparing failure NAMES, which is the only sound comparison when the baseline is not clean."
+    },
+    {
+      "what": "I over-attributed a root cause in public and a maintainer corrected me.",
+      "where": "Steam on free Wine, macOS",
+      "outcome": "Five public surfaces corrected, including the repositories' own READMEs, which carry the retraction in the body. Written up as 'four wrong root causes before sunrise'."
+    }
+  ]
+}
