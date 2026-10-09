@@ -85,7 +85,10 @@ def test_offline_every_forge_status_reads_unknown(page):
     # than being guessed". --no-net is that path, so every badge must be UNKNOWN
     # and no badge may claim MERGED or OPEN from stale data.
     badges = re.findall(r'<span class="state s-([a-z]+)"', page)
-    n_external = len(DATA["external"]) + len(DATA.get("gitlab", []))
+    # `shipped` carries a live badge too, so it is part of the fail-closed promise.
+    # Counting only external+gitlab let a new section add an unchecked badge.
+    n_external = (len(DATA["external"]) + len(DATA.get("gitlab", []))
+                  + len(DATA.get("shipped", [])))
     assert len(badges) == n_external, f"{len(badges)} badges for {n_external} contributions"
     assert set(badges) == {"unknown"}, f"offline build leaked a status: {set(badges)}"
 
