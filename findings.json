@@ -43,6 +43,14 @@
       "actual": "DAY_OF_WEEK computed wrongly when WEEK_OF_MONTH is set (issue #371)",
       "proven": "differential against the JVM",
       "delivered": "fix + test"
+    },
+    {
+      "repo": "astral-sh/ruff",
+      "pr": 29210,
+      "claimed": "a release step that reads a Docker manifest digest and passes it to actions/attest as the subject",
+      "actual": "the digest came from `imagetools inspect ... | jq -r .digest` under GitHub's default `bash -e`, which has no pipefail, so the step took jq's exit status. A failed inspect wrote digest=\"\" and a missing field wrote digest=\"null\", both exiting 0 and both attested",
+      "proven": "both failure modes run, not reasoned about: inspect-fails and null-digest each reproduced, each exiting 0 with the wrong value reaching $GITHUB_OUTPUT",
+      "delivered": "four lines, `set -euo pipefail` plus `jq -e`, applied to the two jobs that carry the pattern, docker-publish and docker-republish. Closed unmerged by an automated reply citing the project's AI policy on contacting maintainers; the defect itself was not contested"
     }
   ],
   "gitlab": [
@@ -57,6 +65,16 @@
       "mr": 78,
       "actual": "CVE-2023-3932 stored baseScore 5.3 MEDIUM against a vector and decomposed metrics that both compute to 8.2; CVE-2023-3399 declared scope UNCHANGED against a vectorString saying S:C",
       "proven": "four independent signals to one on 3932, including GitLab's character-identical published vector. On 3399 baseScore was DELIBERATELY left alone and the MR says why: the release post gives three different severities, so asserting a direction would be a guess dressed as a finding."
+    }
+  ],
+  "shipped": [
+    {
+      "repo": "promptfoo/promptfoo",
+      "pr": 10256,
+      "title": "Two new assertion types: rouge-l and rouge-s",
+      "scale": "+355/-129 across 17 files, 25.8k stars",
+      "what": "promptfoo shipped rouge-n only. This adds summary-level ROUGE-Lsum and skip-bigram ROUGE-S, with their not- forms, through assertion dispatch, the configuration schema, CSV parsing and the eval creator.",
+      "why_hard": "The correctness hinge is sentence segmentation, which is why this is more than wiring a library. ROUGE-L and ROUGE-S split sentences BEFORE folding case; ROUGE-N tokenizes the whole text and can leave a mid-text period attached to the preceding word. Get that order wrong and identical text scores below 1.00, the one failure a scoring assertion must not have. The merged tests pin it: identical text scores 1.00 even when a token repeats, reordering whole sentences still scores 1.00 on rouge-l because each reference sentence is matched against every output sentence, and the same reorder scores below 1.00 on rouge-s because skip-bigrams span sentences."
     }
   ],
   "own_code": {

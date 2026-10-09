@@ -86,6 +86,8 @@ dd{margin:0; color:var(--fg-dim); font:.94rem/1.55 var(--sans)}
         font:.92rem/1.55 var(--sans)}
 .own li b{font:.84rem/1 var(--mono); color:var(--fg)}
 .n{font-family:var(--mono); color:var(--amber-ink); margin:0 5px 0 3px}
+.shipped{border-left:2px solid var(--teal); padding:2px 0 2px 16px; margin:0 0 22px}
+.shipped h3{margin:0 0 4px; font-size:1rem}
 .correction{border-left:2px solid var(--amber-line); padding:2px 0 2px 16px; margin:0 0 22px}
 .correction h3{font:600 1rem/1.4 var(--sans); margin:0 0 3px; color:var(--fg)}
 .where{font:.72rem/1.4 var(--mono); color:var(--fg-faint); margin:0 0 7px}

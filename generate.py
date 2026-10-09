@@ -115,6 +115,21 @@ def render(data: dict, live: bool) -> str:
             f'<dt>How it was proven</dt><dd>{e(g["proven"])}</dd>'
             "</dl></article>")
 
+    if data.get("shipped"):
+        # Deliberately NOT in the ledger above. That one asks what a check claimed and
+        # what it actually did; a feature answers neither. Listed so the contribution
+        # claims elsewhere on the estate resolve to something.
+        add('<h2 class="sec">Shipped upstream, not a defect</h2>')
+        add('<p class="why">Kept out of the ledger above on purpose. That one is for '
+            'checks that could not fail, and these are features.</p>')
+        for sh in data["shipped"]:
+            state, detail = gh_pr(sh["repo"], sh["pr"]) if live else UNKNOWN
+            url = f'https://github.com/{sh["repo"]}/pull/{sh["pr"]}'
+            add(f'<article class="shipped"><h3>{e(sh["title"])}</h3>'
+                f'<p class="where"><a href="{e(url)}" {OUT_TAB}>{e(sh["repo"])}#{sh["pr"]}</a>'
+                f' &middot; <span class="state s-{e(state.lower())}" title="{e(detail)}">{e(state)}</span>'
+                f' &middot; {e(sh["scale"])}</p>'
+                f'<p>{e(sh["what"])}</p><p>{e(sh["why_hard"])}</p></article>')
     add('<h2 class="sec">Found in my own</h2>')
     add('<div class="card own">'
         f'<div><span class="big">{own["headline"]}</span> {e(own["headline_unit"])}</div>'
