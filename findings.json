@@ -57,7 +57,7 @@
     {
       "repo": "gitlab-org/cves",
       "mr": 77,
-      "actual": "CVE-2023-5009, CISA-KEV listed: the CVSS block disagreed with itself. vectorString said AC:H (recomputes 8.2 HIGH) while attackComplexity said LOW and baseScore said 9.6 CRITICAL. The record resolved to a different severity depending on which field a consumer parsed.",
+      "actual": "CVE-2023-5009: the CVSS block disagreed with itself. vectorString said AC:H (recomputes 8.2 HIGH) while attackComplexity said LOW and baseScore said 9.6 CRITICAL. The record resolved to a different severity depending on which field a consumer parsed.",
       "proven": "GitLab's own 16.3.4 release post states 'high severity' and 8.2 in prose; their CI is ajv schema validation, which by construction cannot see cross-field disagreement"
     },
     {
