@@ -18,7 +18,7 @@
       "claimed": "a 53-test suite covering the benchmark runtime",
       "actual": "grading.py, which decides whether a run counts as complete, had NO test file; 7 single-line mutations all passed, including 'report every success as an error'",
       "proven": "mutation score 0/7 measured; one defect reachable through their own shipped client (HTTP 200 with body null -> status EVALUATED, result None, complete stays True)",
-      "delivered": "17 tests + an 11-line fix; suite 53 -> 70, mutation score 0/7 -> 7/7"
+      "delivered": "18 tests + an 11-line fix; suite 53 -> 71, mutation score 0/7 -> 7/7"
     },
     {
       "repo": "heygen-com/hyperframes",
@@ -32,7 +32,7 @@
       "repo": "promptfoo/promptfoo",
       "pr": 11278,
       "claimed": "a BLEU assertion that scores a translation against references",
-      "actual": "a blank reference scored 9.99e-, not 0",
+      "actual": "a blank reference scored 9.99e-8, not 0; and one blank alternative reference let a one-word answer score 1",
       "proven": "reproduced against the shipped assertion",
       "delivered": "fix + test"
     },
@@ -42,7 +42,7 @@
       "claimed": "java.util.Calendar compiled to JavaScript",
       "actual": "DAY_OF_WEEK computed wrongly when WEEK_OF_MONTH is set (issue #371)",
       "proven": "differential against the JVM",
-      "delivered": "fix + test"
+      "delivered": "one-character fix + four re-enabled assertions"
     },
     {
       "repo": "astral-sh/ruff",
@@ -72,7 +72,7 @@
       "repo": "promptfoo/promptfoo",
       "pr": 10256,
       "title": "Two new assertion types: rouge-l and rouge-s",
-      "scale": "+355/-129 across 17 files, 25.8k stars",
+      "scale": "+355/-129 across 17 files, 26k+ stars",
       "what": "promptfoo shipped rouge-n only. This adds summary-level ROUGE-Lsum and skip-bigram ROUGE-S, with their not- forms, through assertion dispatch, the configuration schema, CSV parsing and the eval creator.",
       "why_hard": "The correctness hinge is sentence segmentation, which is why this is more than wiring a library. ROUGE-L and ROUGE-S split sentences BEFORE folding case; ROUGE-N tokenizes the whole text and can leave a mid-text period attached to the preceding word. Get that order wrong and identical text scores below 1.00, the one failure a scoring assertion must not have. The merged tests pin it: identical text scores 1.00 even when a token repeats, reordering whole sentences still scores 1.00 on rouge-l because each reference sentence is matched against every output sentence, and the same reorder scores below 1.00 on rouge-s because skip-bigrams span sentences."
     }
@@ -142,7 +142,7 @@
     {
       "what": "I shipped a linter to PyPI that reported correct CI as broken, and the corpus average hid it.",
       "where": "deadgate 0.1.0, found by auditing Arize-ai/openinference",
-      "outcome": "Three detectors asked whether a job reads its upstream's result using needs\\.[A-Za-z0-9_-]+\\., which cannot match '*', so the WILDCARD form GitHub documents was the one spelling the tool could not see. The finding's own text read 'never reads needs.*.result' while failing to match that string. On openinference, whose four CI gates each read it twice: 13 HIGH before, 1 after, and the survivor is unrelated. Corpus-wide the fix removes 43 of 430 HIGH, which is 9.1% against 92% on that one repository. The tool was least accurate on the repositories with the most careful CI, so no corpus average would have surfaced it. All 149 tests passed before and after, which is why there are 156 now. A fourth defect: the documented reproduction command for the published numbers raised NameError on three undefined names, so those figures came from a script that was never the one shipped."
+      "outcome": "Three detectors asked whether a job reads its upstream's result using needs\\.[A-Za-z0-9_-]+\\., which cannot match '*', so the WILDCARD form GitHub documents was the one spelling the tool could not see. The finding's own text read 'never reads needs.*.result' while failing to match that string. On openinference, whose four CI gates each read it twice: 13 HIGH before, 1 after, and the survivor is unrelated. On the capped 275-repository corpus the fix removed 43 of 473 HIGH (9.1%), against 12 of 13 (92%) on that one repository. The 0.1.2 release, measured against 0.1.1 on the full corpus, removed 446 of 1,104 HIGH (40%). The tool was least accurate on the repositories with the most careful CI, so no corpus average would have surfaced it. All 149 tests passed before and after, which is why there are 156 now. A fourth defect: the documented reproduction command for the published numbers raised NameError on three undefined names, so those figures came from a script that was never the one shipped."
     },
     {
       "what": "My own fix was wrong in the other direction, and the mutation sweep is what caught it.",

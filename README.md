@@ -11,8 +11,9 @@ deployed copy is the one under version control.
     python generate.py --no-net                              # offline, every status UNKNOWN
     python -m pytest tests/                                  # 9 tests
 
-Every forge status on the page is fetched at build time, so a merged PR cannot sit there as
-open. A status that cannot be fetched reads UNKNOWN and is never guessed or carried over.
+Every forge status on the page is fetched at build time, and the page prints the date it was
+built, so a status is as current as that build and says so. A status that cannot be fetched
+reads UNKNOWN and is never guessed or carried over.
 
 ## Why this repository has tests
 

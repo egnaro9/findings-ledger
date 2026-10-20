@@ -16,6 +16,7 @@ asserting something it did not check.
 """
 from __future__ import annotations
 
+import datetime
 import html
 import json
 import pathlib
@@ -79,6 +80,7 @@ def render(data: dict, live: bool) -> str:
     add('<nav class="contact" style="margin:0 0 30px" aria-label="Site">'
         '<span class="chip"><a href="../">&larr; Home</a></span>'
         '<span class="chip"><a href="../about/">About</a></span>'
+        '<span class="chip"><a href="../orchestration/">Orchestration</a></span>'
         '<span class="chip"><a href="../resume/">R&eacute;sum&eacute;</a></span></nav>')
     add('<div class="label"><span class="tick">//</span> Findings</div>')
     add("<h1>Checks that cannot fail</h1>")
@@ -136,7 +138,9 @@ def render(data: dict, live: bool) -> str:
         f'<p style="color:var(--fg-dim);font:.94rem/1.55 var(--sans);margin:10px 0 0">'
         f'{e(own["note"])}</p><ul>')
     for r in own["fixed_today"]:
-        add(f'<li><b>{e(r["repo"])}</b><span class="n">{r["n"]}</span>'
+        # Each repository links to itself, so a row is one click from the code it describes.
+        add(f'<li><a href="https://github.com/egnaro9/{e(r["repo"])}" {OUT_TAB}>'
+            f'<b>{e(r["repo"])}</b></a><span class="n">{r["n"]}</span>'
             f'<i class="unit">{e(r["unit"])}</i> {e(r["what"])}</li>')
     add("</ul></div>")
 
@@ -145,10 +149,14 @@ def render(data: dict, live: bool) -> str:
         add(f'<article class="correction"><h3>{e(c["what"])}</h3>'
             f'<p class="where">{e(c["where"])}</p><p>{e(c["outcome"])}</p></article>')
 
-    add('<div class="foot">Every status above is fetched from the GitHub and GitLab APIs when '
-        "this page is built, so a claim here cannot drift from the forge. A status that could "
-        "not be fetched reads UNKNOWN rather than being guessed.<br>"
-        f'<a href="https://github.com/egnaro9" {OUT_TAB}>github.com/egnaro9</a></div>')
+    # The build date is printed because a status fetched at build time is only as fresh as
+    # the build. "Cannot drift from the forge" was true for a day and then read as a promise.
+    built = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    add('<div class="foot">Every status above was fetched from the GitHub and GitLab APIs when '
+        f"this page was built, on {built} (UTC), so it is as current as that build. A status "
+        "that could not be fetched reads UNKNOWN rather than being guessed.<br>"
+        f'Source: <a href="https://github.com/egnaro9/findings-ledger" {OUT_TAB}>findings-ledger</a>'
+        f' &middot; <a href="https://github.com/egnaro9" {OUT_TAB}>github.com/egnaro9</a></div>')
 
     add("</div>\n</div>\n</body>\n</html>")
     return "\n".join(out) + "\n"
