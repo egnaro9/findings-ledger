@@ -9,7 +9,7 @@ deployed copy is the one under version control.
 
     python generate.py --out ../egnaro9.github.io/findings   # deploy target
     python generate.py --no-net                              # offline, every status UNKNOWN
-    python -m pytest tests/                                  # 9 tests
+    python -m pytest tests/                                  # 13 tests
 
 Every forge status on the page is fetched at build time, and the page prints the date it was
 built, so a status is as current as that build and says so. A status that cannot be fetched

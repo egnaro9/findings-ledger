@@ -20,6 +20,7 @@ import datetime
 import html
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import urllib.parse
@@ -28,6 +29,7 @@ import urllib.request
 HERE = pathlib.Path(__file__).resolve().parent
 UNKNOWN = ("UNKNOWN", "status could not be fetched")
 OUT_TAB = 'target="erikhill-out"'   # estate rule: every external link shares one named tab
+LINK = re.compile(r"\[([^\[\]]+)\]\((https://[^)\s]+)\)")
 
 
 def gh_pr(repo: str, number: int) -> tuple[str, str]:
@@ -60,6 +62,15 @@ def gl_mr(project: str, iid: int) -> tuple[str, str]:
 
 def e(s) -> str:
     return html.escape(str(s))
+
+
+def prose(s) -> str:
+    """Escape a prose field, then render [text](https://...) as a link in the shared tab.
+
+    Escaping runs first, so the link text and URL are already inert by the time the link
+    is built, and only https targets are honoured: a javascript: or data: URL stays text.
+    """
+    return LINK.sub(lambda m: f'<a href="{m[2]}" {OUT_TAB}>{m[1]}</a>', e(s))
 
 
 def render(data: dict, live: bool) -> str:
@@ -101,10 +112,10 @@ def render(data: dict, live: bool) -> str:
             f'<a class="repo" href="{e(url)}" {OUT_TAB}>{e(f["repo"])}#{f["pr"]}</a>'
             f'<span class="state s-{e(state.lower())}" title="{e(detail)}">{e(state)}</span>'
             "</header><dl>"
-            f'<dt>The check claimed</dt><dd>{e(f["claimed"])}</dd>'
-            f'<dt>What it actually did</dt><dd>{e(f["actual"])}</dd>'
-            f'<dt>How it was proven</dt><dd>{e(f["proven"])}</dd>'
-            f'<dt>Delivered</dt><dd>{e(f["delivered"])}</dd>'
+            f'<dt>The check claimed</dt><dd>{prose(f["claimed"])}</dd>'
+            f'<dt>What it actually did</dt><dd>{prose(f["actual"])}</dd>'
+            f'<dt>How it was proven</dt><dd>{prose(f["proven"])}</dd>'
+            f'<dt>Delivered</dt><dd>{prose(f["delivered"])}</dd>'
             "</dl></article>")
     for g in data["gitlab"]:
         state, detail = gl_mr(g["repo"], g["mr"]) if live else UNKNOWN
@@ -113,8 +124,8 @@ def render(data: dict, live: bool) -> str:
             f'<a class="repo" href="{e(url)}" {OUT_TAB}>{e(g["repo"])}!{g["mr"]}</a>'
             f'<span class="state s-{e(state.lower())}" title="{e(detail)}">{e(state)}</span>'
             "</header><dl>"
-            f'<dt>What it actually did</dt><dd>{e(g["actual"])}</dd>'
-            f'<dt>How it was proven</dt><dd>{e(g["proven"])}</dd>'
+            f'<dt>What it actually did</dt><dd>{prose(g["actual"])}</dd>'
+            f'<dt>How it was proven</dt><dd>{prose(g["proven"])}</dd>'
             "</dl></article>")
 
     if data.get("shipped"):
@@ -131,7 +142,7 @@ def render(data: dict, live: bool) -> str:
                 f'<p class="where"><a href="{e(url)}" {OUT_TAB}>{e(sh["repo"])}#{sh["pr"]}</a>'
                 f' &middot; <span class="state s-{e(state.lower())}" title="{e(detail)}">{e(state)}</span>'
                 f' &middot; {e(sh["scale"])}</p>'
-                f'<p>{e(sh["what"])}</p><p>{e(sh["why_hard"])}</p></article>')
+                f'<p>{prose(sh["what"])}</p><p>{prose(sh["why_hard"])}</p></article>')
     add('<h2 class="sec">Found in my own</h2>')
     add('<div class="card own">'
         f'<div><span class="big">{own["headline"]}</span> {e(own["headline_unit"])}</div>'
@@ -141,13 +152,13 @@ def render(data: dict, live: bool) -> str:
         # Each repository links to itself, so a row is one click from the code it describes.
         add(f'<li><a href="https://github.com/egnaro9/{e(r["repo"])}" {OUT_TAB}>'
             f'<b>{e(r["repo"])}</b></a><span class="n">{r["n"]}</span>'
-            f'<i class="unit">{e(r["unit"])}</i> {e(r["what"])}</li>')
+            f'<i class="unit">{e(r["unit"])}</i> {prose(r["what"])}</li>')
     add("</ul></div>")
 
     add('<h2 class="sec">Where I was wrong</h2>')
     for c in data["corrected"]:
         add(f'<article class="correction"><h3>{e(c["what"])}</h3>'
-            f'<p class="where">{e(c["where"])}</p><p>{e(c["outcome"])}</p></article>')
+            f'<p class="where">{e(c["where"])}</p><p>{prose(c["outcome"])}</p></article>')
 
     # The build date is printed because a status fetched at build time is only as fresh as
     # the build. "Cannot drift from the forge" was true for a day and then read as a promise.

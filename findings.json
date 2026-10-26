@@ -50,7 +50,7 @@
       "claimed": "a release step that reads a Docker manifest digest and passes it to actions/attest as the subject",
       "actual": "the digest came from `imagetools inspect ... | jq -r .digest` under GitHub's default `bash -e`, which has no pipefail, so the step took jq's exit status. A failed inspect wrote digest=\"\" and a missing field wrote digest=\"null\", both exiting 0 and both attested",
       "proven": "both failure modes run, not reasoned about: inspect-fails and null-digest each reproduced, each exiting 0 with the wrong value reaching $GITHUB_OUTPUT",
-      "delivered": "four lines, `set -euo pipefail` plus `jq -e`, applied to the two jobs that carry the pattern, docker-publish and docker-republish. Closed unmerged by an automated reply citing the project's AI policy on contacting maintainers; the defect itself was not contested"
+      "delivered": "four lines, `set -euo pipefail` plus `jq -e`, applied to the two jobs that carry the pattern, docker-publish and docker-republish. Closed unmerged by an automated reply citing the project's AI policy on contacting maintainers; the defect itself was not contested. Re-reported on 2026-10-20 as [issue #29533](https://github.com/astral-sh/ruff/issues/29533), written in my own words with the AI assistance disclosed, as that policy asks. The maintainer closed that issue as not planned on 2026-10-20: \"doesn't seem to be causing any problems.\" I agree it is not causing problems today; it would only show if the inspect call itself failed"
     }
   ],
   "gitlab": [

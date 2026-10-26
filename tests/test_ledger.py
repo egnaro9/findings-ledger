@@ -13,6 +13,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -26,6 +27,17 @@ def page(tmp_path_factory):
     out = tmp_path_factory.mktemp("page")
     subprocess.run([sys.executable, "generate.py", "--no-net", "--out", str(out)],
                    cwd=HERE, check=True, capture_output=True)
+    return (out / "index.html").read_text()
+
+
+def render_from(src: dict, tmp_path) -> str:
+    """Render a modified copy of findings.json offline, without touching the real one."""
+    (tmp_path / "style.css").write_text((HERE / "style.css").read_text())
+    (tmp_path / "generate.py").write_text((HERE / "generate.py").read_text())
+    (tmp_path / "findings.json").write_text(json.dumps(src))
+    out = tmp_path / "out"
+    subprocess.run([sys.executable, "generate.py", "--no-net", "--out", str(out)],
+                   cwd=tmp_path, check=True, capture_output=True)
     return (out / "index.html").read_text()
 
 
@@ -113,13 +125,54 @@ def test_external_links_share_the_one_named_tab(page):
 def test_angle_brackets_in_content_are_escaped(page, tmp_path):
     src = json.loads((HERE / "findings.json").read_text())
     src["own_code"]["fixed_today"][0]["what"] = '<script>alert(1)</script>'
-    scratch = tmp_path / "findings.json"
-    (tmp_path / "style.css").write_text((HERE / "style.css").read_text())
-    (tmp_path / "generate.py").write_text((HERE / "generate.py").read_text())
-    scratch.write_text(json.dumps(src))
-    out = tmp_path / "out"
-    subprocess.run([sys.executable, "generate.py", "--no-net", "--out", str(out)],
-                   cwd=tmp_path, check=True, capture_output=True)
-    rendered = (out / "index.html").read_text()
+    rendered = render_from(src, tmp_path)
     assert "<script>alert(1)</script>" not in rendered
     assert "&lt;script&gt;" in rendered
+
+
+# ---------------------------------------------------------------------------
+# the corrections that were hand-edited into the deployed page, so a regeneration
+# would have reverted them without a word
+# ---------------------------------------------------------------------------
+
+def test_a_link_written_in_the_data_reaches_the_page_as_a_link(page):
+    # The ruff re-report reached the page as a hand-edited anchor, because every
+    # field was escaped and a link could not be expressed in findings.json at all.
+    def strings(x):
+        if isinstance(x, str):
+            yield x
+        for v in x.values() if isinstance(x, dict) else x if isinstance(x, list) else ():
+            yield from strings(v)
+    link = re.compile(r"\[([^\[\]]+)\]\((https://[^)\s]+)\)")
+    links = [m for s in strings(DATA) for m in link.findall(s)]
+    assert links, "findings.json has no prose link, so this test checks nothing"
+    for text, url in links:
+        assert f'<a href="{url}" target="erikhill-out">{text}</a>' in page
+
+
+def test_only_https_links_are_honoured_and_link_text_stays_escaped(tmp_path):
+    src = json.loads((HERE / "findings.json").read_text())
+    src["corrected"][0]["outcome"] = (
+        "[bad](javascript:alert(1)) [<b>x</b>](https://example.com/?a=1&b=2)")
+    rendered = render_from(src, tmp_path)
+    assert 'href="javascript:' not in rendered
+    assert "[bad](javascript:alert(1))" in rendered
+    assert ('<a href="https://example.com/?a=1&amp;b=2" target="erikhill-out">'
+            "&lt;b&gt;x&lt;/b&gt;</a>") in rendered
+
+
+def test_every_tool_row_links_to_its_repository(page):
+    for r in OWN["fixed_today"]:
+        url = f'https://github.com/egnaro9/{r["repo"]}'
+        assert (f'<a href="{url}" target="erikhill-out"><b>{r["repo"]}</b></a>'
+                in page), f"{r['repo']} is not linked to its repository"
+
+
+def test_the_footer_dates_the_build_it_describes(page):
+    # The footer says when the statuses above were fetched. A date typed into the
+    # page is true for one build, which is how it came to say 2026-10-20 above a
+    # status hand-edited on 2026-10-25.
+    m = re.search(r"when this page was built, on (\d{4}-\d{2}-\d{2}) \(UTC\)", page)
+    assert m, "the footer no longer dates its build"
+    now = datetime.now(timezone.utc)
+    assert m[1] in {now.strftime("%Y-%m-%d"), (now - timedelta(days=1)).strftime("%Y-%m-%d")}
