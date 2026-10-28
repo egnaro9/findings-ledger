@@ -32,9 +32,9 @@
       "repo": "promptfoo/promptfoo",
       "pr": 11278,
       "claimed": "a BLEU assertion that scores a translation against references",
-      "actual": "a blank reference scored 9.99e-8, not 0; and one blank alternative reference let a one-word answer score 1",
+      "actual": "a blank reference scored 9.99e-8, not 0. Reviewing the fix, the maintainer found a worse case, one blank alternative reference letting a one-word answer score 1, and fixed it in the same pull request",
       "proven": "reproduced against the shipped assertion",
-      "delivered": "fix + test"
+      "delivered": "fix + test for the blank-reference score; the brevity-penalty case is the maintainer's, merged with it"
     },
     {
       "repo": "konsoletyper/teavm",
