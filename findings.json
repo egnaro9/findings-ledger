@@ -65,6 +65,12 @@
       "mr": 78,
       "actual": "CVE-2023-3932 stored baseScore 5.3 MEDIUM against a vector and decomposed metrics that both compute to 8.2; CVE-2023-3399 declared scope UNCHANGED against a vectorString saying S:C",
       "proven": "four independent signals to one on 3932, including GitLab's character-identical published vector. On 3399 baseScore was DELIBERATELY left alone and the MR says why: the release post gives three different severities, so asserting a direction would be a guess dressed as a finding."
+    },
+    {
+      "repo": "gitlab-com/content-sites/handbook",
+      "mr": 21306,
+      "actual": "The Reproducible Vulnerabilities page gave GitLab's disclosure window as 30 days, in the same sentence that links to GitLab's disclosure policy, which says 90.",
+      "proven": "the handbook's own Engaging with Security page says 90 days in four places, including its operational steps and the GitLab Security Bot, which comments on confidential issues 90 days after closure, so 90 is the figure the process runs on. One sentence changed, 30 to 90."
     }
   ],
   "shipped": [
