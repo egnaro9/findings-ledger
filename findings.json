@@ -32,9 +32,9 @@
       "repo": "promptfoo/promptfoo",
       "pr": 11278,
       "claimed": "a BLEU assertion that scores a translation against references",
-      "actual": "a blank reference scored 9.99e-8, not 0. Reviewing the fix, the maintainer found a worse case, one blank alternative reference letting a one-word answer score 1, and fixed it in the same pull request",
+      "actual": "a blank reference scored 9.99e-8, not 0",
       "proven": "reproduced against the shipped assertion",
-      "delivered": "fix + test for the blank-reference score; the brevity-penalty case is the maintainer's, merged with it"
+      "delivered": "fix + test for the blank-reference score. In the same pull request the co-founder condensed the fix, rewrote its tests and added tests for a related brevity-penalty case"
     },
     {
       "repo": "konsoletyper/teavm",
@@ -78,9 +78,9 @@
       "repo": "promptfoo/promptfoo",
       "pr": 10256,
       "title": "Two new assertion types: rouge-l and rouge-s",
-      "scale": "+355/-129 across 17 files, 26k+ stars",
-      "what": "promptfoo shipped rouge-n only. This adds summary-level ROUGE-Lsum and skip-bigram ROUGE-S, with their not- forms, through assertion dispatch, the configuration schema, CSV parsing and the eval creator.",
-      "why_hard": "The correctness hinge is sentence segmentation, which is why this is more than wiring a library. ROUGE-L and ROUGE-S split sentences BEFORE folding case; ROUGE-N tokenizes the whole text and can leave a mid-text period attached to the preceding word. Get that order wrong and identical text scores below 1.00, the one failure a scoring assertion must not have. The merged tests pin it: identical text scores 1.00 even when a token repeats, reordering whole sentences still scores 1.00 on rouge-l because each reference sentence is matched against every output sentence, and the same reorder scores below 1.00 on rouge-s because skip-bigrams span sentences."
+      "scale": "26k+ stars",
+      "what": "promptfoo shipped rouge-n only: rouge-l and rouge-s had scoring code but were not registered, so a config using either failed as unknown. My four commits registered both, with their not- forms, through assertion dispatch, the configuration schema, CSV parsing and the eval creator; made both score identical text 1.00 when a token repeats, first by counting matches in-house and then by moving to js-rouge 3.2.1, with blank input scoring 0 instead of throwing; and added tests, including shared ones across the similarity metrics. The co-founder then integrated and refactored them in the same pull request.",
+      "why_hard": "My tests in the merged suite pin the behaviour: identical text scores 1.00 even when a token repeats, reordering whole sentences still scores 1.00 on rouge-l because each reference sentence is matched against every output sentence, and the same reorder scores below 1.00 on rouge-s because skip-bigrams span sentences."
     }
   ],
   "own_code": {
